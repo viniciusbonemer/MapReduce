@@ -6,12 +6,17 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import slave.ProcessRunner.AlreadyRunningException;
 
@@ -23,13 +28,12 @@ public class App {
 
     public static void main(String[] args) {
 
-        if (args.length != 2) {
-            System.err.println("Usage: java App <mode> <file-name>");
+        if (args.length != 1 && args.length != 2) {
+            System.err.println("Usage: \n\tjava App <mode>\n\tjava App <mode> <file-name>");
             System.exit(1);
         }
 
         String modeStr = args[0];
-        String fileName = args[1];
 
         int mode = 0;
         try {
@@ -39,16 +43,24 @@ public class App {
             System.exit(1);
         }
 
-        App app = new App(fileName);
         switch (mode) {
-            case 0:
+            case 0: {
+                String fileName = args[1];
+                App app = new App(fileName);
                 app.createMapFromSplit();
                 break;
-            case 1:
-                app.machines = app.readReceivedMachinesFile();
-                Set<String> shuffleFiles = app.prepareShuffleFiles();
-                app.sendShuffleFiles(shuffleFiles);
+            }
+            case 1: {
+                String fileName = args[1];
+                App app = new App(fileName);
+                app.createShuffleFromMap();
                 break;
+            }
+            case 2: {
+                App app = new App();
+                app.createReduceFromShuffle();
+                break;
+            }
             default:
                 System.err.println("Unexpected mode " + mode);
                 System.exit(1);
@@ -81,6 +93,10 @@ public class App {
         return Constants.shufflesDir + hash + "-" + machineName + ".txt";
     }
 
+    private static String getFileForHash(String hash) {
+        return Constants.reducesDir + hash + ".txt";
+    }
+
     //
     // Properties
     //
@@ -92,6 +108,10 @@ public class App {
     //
     // Constructor
     //
+
+    private App() {
+        this.fileName = null;
+    }
 
     private App(String fileName) {
         this.fileName = fileName;
@@ -159,6 +179,12 @@ public class App {
     //
     // SHUFFLE
     //
+
+    private void createShuffleFromMap() {
+        this.machines = this.readReceivedMachinesFile();
+        Set<String> shuffleFiles = this.prepareShuffleFiles();
+        this.sendShuffleFiles(shuffleFiles);
+    }
 
     private List<String> readReceivedMachinesFile() {
         FileReader fr = null;
@@ -328,5 +354,119 @@ public class App {
             }
         });
     }
+
+    //
+    // REDUCE
+    //
+
+    private void createReduceFromShuffle() {
+        createReducesDirectory();
+        createReduces();
+    }
+
+    private void createReducesDirectory() {
+        ProcessBuilder pb = new ProcessBuilder("mkdir", "-p", Constants.reducesDir);
+        try {
+            Process p = pb.start();
+            p.waitFor();
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+    }
+
+    private SimpleEntry<String, Integer> reduceFile(String fileName) {
+        int count = 0;
+        String word = null;
+
+        FileReader fr = null;
+        BufferedReader br = null;
+
+        try {
+            fr = new FileReader(fileName);
+            br = new BufferedReader(fr);
+
+            for (String line = br.readLine(); line != null; line = br.readLine()) {
+                String[] comps = line.split(" ");
+                if (comps.length != 2) { continue; }
+                if (word == null) {
+                    word = comps[0];
+                }
+                count += 1;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(1);
+        } finally {
+            try { br.close(); } catch (Exception e) {}
+            try { fr.close(); } catch (Exception e) {}
+        }
+
+        return new SimpleEntry<String, Integer>(word, count);
+    }
+
+    private void createHashFile(String hash, String word, int count) {
+        FileWriter fw = null;
+        BufferedWriter bw = null;
+        String hashFile = App.getFileForHash(hash);
+
+        try {
+            fw = new FileWriter(hashFile, true);
+            bw = new BufferedWriter(fw);
+
+            String line = word + " " + count + "\n";
+            bw.write(line);
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(1);
+        } finally {
+            try { bw.close(); } catch (Exception e) { }
+            try { fw.close(); } catch (Exception e) { }
+        }
+    }
+
+    private void createReduces() {
+
+        // Get list of shuffles received
+        List<Path> receivedShuffles = null;
+        try (Stream<Path> paths = Files.walk(Paths.get(Constants.receivedShufflesDir))) {
+            receivedShuffles = paths
+                .filter(Files::isRegularFile)
+                .collect(Collectors.toUnmodifiableList());
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+
+        // Create list of hashes
+        List<String> hashes = receivedShuffles.stream()
+            .map(path -> path.getFileName().toString())
+            .map(name -> name.split("-")[0])
+            .distinct()
+            .collect(Collectors.toUnmodifiableList());
+        
+        for (String hash : hashes) {
+            List<String> files = receivedShuffles.stream()
+                .filter(path -> path.getFileName().toString().startsWith(hash))
+                .map(path -> path.toString())
+                .collect(Collectors.toUnmodifiableList());
+            SimpleEntry<String, Integer> pair = files.stream()
+                .map(this::reduceFile)
+                .reduce((result, value) -> {
+                    if (result == null) {
+                        return value;
+                    } else {
+                        return new SimpleEntry<String,Integer>(
+                            value.getKey(), result.getValue() + value.getValue()
+                            );
+                    }
+                }).get();
+                
+            // Write to file
+            createHashFile(hash, pair.getKey(), pair.getValue());
+        }
+
+    }
+
 
 }

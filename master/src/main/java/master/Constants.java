@@ -13,6 +13,8 @@ public class Constants {
     static final String splitDir = basedir + "splits/";
     static final String mapsDir = basedir + "maps/";
     static final String machinesFile = basedir + "machines.txt";
+    static final String reducesDir = basedir + "reduces/";
+    static final String resultsDir = basedir + "results/";
 
     private Constants() { }
 }

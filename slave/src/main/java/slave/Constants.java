@@ -12,6 +12,7 @@ public class Constants {
     static final String shufflesDir = basedir + "shuffles/";
     static final String machinesFile = basedir + "machines.txt";
     static final String receivedShufflesDir = basedir + "shufflesreceived/";
+    static final String reducesDir = basedir + "reduces/";
 
     private Constants() { }
 }

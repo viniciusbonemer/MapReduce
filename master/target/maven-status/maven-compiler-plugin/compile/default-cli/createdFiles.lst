@@ -1,6 +1,7 @@
-master/ConnectionTester.class
+master/App$MeasuredTime.class
 master/ProcessRunner$ProcessCompletion.class
-master/ProcessRunner$AlreadyRunningException.class
 master/Constants.class
-master/ProcessRunner.class
 master/App.class
+master/ConnectionTester.class
+master/ProcessRunner$AlreadyRunningException.class
+master/ProcessRunner.class
