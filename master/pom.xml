@@ -61,6 +61,7 @@
                   <classpath />
                   <argument>master.App</argument>
                   <argument>${basedir}/src/main/resources/Machines.txt</argument>
+                  <argument>${basedir}/../input-files/sante_publique.txt</argument>
               </arguments>
           </configuration>
       </plugin>

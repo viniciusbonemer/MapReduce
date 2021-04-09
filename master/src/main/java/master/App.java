@@ -39,11 +39,6 @@ public class App {
     }
 
     private final static String jarName = "slave-0.1.jar";
-    private final static int splitsCount = 3;
-
-    private static String getFileForSplit(int i) {
-        return Constants.splitDir + "S" + i + ".txt";
-    }
 
     private static String getMapFileFromSplit(String filePath) {
         String[] components = filePath.split("/");
@@ -57,22 +52,31 @@ public class App {
 
     public static void log(String message, MeasuredTime t) {
         String ts = " in " + t.s + "s " + t.ms + "ms " + t.us + "us " + t.ns + "ns";
-        System.out.println(message + ts);
+        System.err.println(message + ts);
     }
 
     public static void main(String[] args) {
 
-        if (args.length != 1) {
-            System.err.println("Usage: java App <machines-file>");
+        if (args.length != 2) {
+            System.err.println("Usage: java App <machines-file> <input-file>");
             System.exit(1);
         }
 
-        String fileName = args[0];
+        String machinesFileName = args[0];
+        String inputFile = args[1];
 
-        ConnectionTester connectionTester = new ConnectionTester(fileName);
+        ConnectionTester connectionTester = new ConnectionTester(machinesFileName);
         connectionTester.runTests();
         
-        App app = new App(connectionTester.getAvailableMachines());
+        List<String> machines = connectionTester.getAvailableMachines();
+        if (machines.size() == 0) {
+            System.err.println("Unable to reach remote machines");
+            System.exit(1);
+        }
+        App app = new App(connectionTester.getAvailableMachines(), inputFile);
+
+        // MAP
+
         List<ProcessRunner> runners = app.createMapRunners();
 
         List<Thread> threads = runners.stream()
@@ -95,6 +99,8 @@ public class App {
         MeasuredTime mt = new MeasuredTime(duration);
         
         App.log("MAP FINISHED", mt);
+
+        // SHUFFLE
 
         runners = app.createShuffleRunners();
 
@@ -119,6 +125,8 @@ public class App {
         
         App.log("SHUFFLE FINISHED", mt);
 
+        // REDUCE
+
         runners = app.createReduceRunners();
 
         threads = runners.stream()
@@ -141,6 +149,8 @@ public class App {
         mt = new MeasuredTime(duration);
         
         App.log("REDUCE FINISHED", mt);
+
+        // RETRIEVE
 
         runners = app.createRetrieveResultsRunners();
 
@@ -166,13 +176,18 @@ public class App {
         mt = new MeasuredTime(duration);
         
         App.log("RETRIEVE FINISHED", mt);
+
+        // app.printResults();
     }
 
     private List<String> machines;
     private List<String> usedMachines = new ArrayList<String>();
 
-    private App(List<String> machines) {
+    private Splits splits;
+
+    private App(List<String> machines, String filePath) {
         this.machines = machines;
+        this.splits = Splits.create(filePath, machines.size());
     }
 
     private String createUsedMachinesFile() {
@@ -206,21 +221,15 @@ public class App {
     }
 
     private List<ProcessRunner> createMapRunners() {
-        ArrayList<ProcessRunner> runners = new ArrayList<>(App.splitsCount);
-        if (machines.size() < App.splitsCount) {
-            // TODO: Adapt to use round robin (at least one machine)
-            System.err.println("Not enough machines. Have " + App.splitsCount + " splits and " 
-            + machines.size() + " machines.");
-            System.exit(1);
-        }
-        this.usedMachines = machines.subList(0, Math.min(App.splitsCount, machines.size()));
+        ArrayList<ProcessRunner> runners = new ArrayList<>(splits.getSplitsCount());
+        this.usedMachines = machines.subList(0, Math.min(splits.getSplitsCount(), machines.size()));
         String usedMachinesFileName = createUsedMachinesFile();
-        for (int i = 0; i < App.splitsCount; ++i) {
+        for (int i = 0; i < splits.getSplitsCount(); ++i) {
             final int machineIndex = i % machines.size();
             final String machine = machines.get(machineIndex);
             final String login = Constants.username + "@" + machine;
             final String mkdir = Constants.mkdir + " " + Constants.splitDir;
-            final String localFile = App.getFileForSplit(i);
+            final String localFile = splits.getFileForSplit(i);
             final String[] comps = localFile.split("/");
             final String name = comps[comps.length - 1];
             final String splitFile = Constants.splitDir + name;
@@ -257,14 +266,14 @@ public class App {
     // Shuffle
 
     private List<ProcessRunner> createShuffleRunners() {
-        ArrayList<ProcessRunner> runners = new ArrayList<>(App.splitsCount);
+        ArrayList<ProcessRunner> runners = new ArrayList<>(splits.getSplitsCount());
         for (int i = 0; i < usedMachines.size(); ++i) {
             // For each machine
             // Run jar with 1 and map filename
             final String machine = usedMachines.get(i);
             final String login = Constants.username + "@" + machine;
 
-            final String localFile = App.getFileForSplit(i);
+            final String localFile = splits.getFileForSplit(i);
             final String[] comps = localFile.split("/");
             final String name = comps[comps.length - 1];
             final String splitFile = Constants.splitDir + name;
@@ -291,7 +300,7 @@ public class App {
     // Reduce
 
     private List<ProcessRunner> createReduceRunners() {
-        ArrayList<ProcessRunner> runners = new ArrayList<>(App.splitsCount);
+        ArrayList<ProcessRunner> runners = new ArrayList<>(splits.getSplitsCount());
         for (int i = 0; i < usedMachines.size(); ++i) {
             // For each machine
             // Run jar with 1 and map filename
@@ -319,7 +328,7 @@ public class App {
     // Retrieve results
 
     private List<ProcessRunner> createRetrieveResultsRunners() {
-        ArrayList<ProcessRunner> runners = new ArrayList<>(App.splitsCount);
+        ArrayList<ProcessRunner> runners = new ArrayList<>(splits.getSplitsCount());
         for (int i = 0; i < usedMachines.size(); ++i) {
             final String machine = usedMachines.get(i);
             final String login = Constants.username + "@" + machine;
@@ -397,6 +406,29 @@ public class App {
             for (Path path : machineResults) {
                 appendReultsFromFile(path.toString(), resultsFile);
             }
+        }
+    }
+
+    private void printResults() {
+        final String resultsFile = Constants.resultsDir + "results.txt";
+        
+        FileReader fr = null;
+        BufferedReader br = null;
+
+        try {
+            fr = new FileReader(resultsFile);
+            br = new BufferedReader(fr);
+
+            String line = null;
+            while ((line = br.readLine()) != null) {
+                System.out.println(line);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(1);
+        } finally {
+            try { br.close(); } catch (Exception e) { }
+            try { fr.close(); } catch (Exception e) { }
         }
     }
 
