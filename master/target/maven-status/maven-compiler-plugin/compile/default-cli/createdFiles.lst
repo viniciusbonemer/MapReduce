@@ -1,0 +1,6 @@
+master/ConnectionTester.class
+master/ProcessRunner$ProcessCompletion.class
+master/ProcessRunner$AlreadyRunningException.class
+master/Constants.class
+master/ProcessRunner.class
+master/App.class

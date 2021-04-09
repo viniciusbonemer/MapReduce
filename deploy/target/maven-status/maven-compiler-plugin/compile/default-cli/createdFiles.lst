@@ -1,0 +1,6 @@
+deploy/ProcessRunner$ProcessCompletion.class
+deploy/App.class
+deploy/ProcessRunner.class
+deploy/ConnectionTester.class
+deploy/Constants.class
+deploy/ProcessRunner$AlreadyRunningException.class

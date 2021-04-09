@@ -1,0 +1,51 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Launch Current File",
+            "request": "launch",
+            "mainClass": "${file}"
+        },
+        {
+            "type": "java",
+            "name": "Launch Clean App",
+            "request": "launch",
+            "mainClass": "clean.App",
+            "projectName": "clean",
+            "args": "${workspaceFolder}/clean/src/main/resources/Machines.txt"
+        },
+        {
+            "type": "java",
+            "name": "Launch Deploy App",
+            "request": "launch",
+            "mainClass": "deploy.App",
+            "projectName": "deploy"
+        },
+        {
+            "type": "java",
+            "name": "Launch MapReduce App",
+            "request": "launch",
+            "mainClass": "map_reduce.App",
+            "projectName": "map_reduce"
+        },
+        {
+            "type": "java",
+            "name": "Launch Master App",
+            "request": "launch",
+            "mainClass": "master.App",
+            "projectName": "master"
+        },
+        {
+            "type": "java",
+            "name": "Launch Slave App",
+            "request": "launch",
+            "mainClass": "slave.App",
+            "projectName": "slave",
+            "args": "1 /tmp/vbonemer/maps/UM0.txt"
+        }
+    ]
+}
