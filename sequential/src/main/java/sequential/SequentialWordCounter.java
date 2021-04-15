@@ -1,4 +1,4 @@
-package map_reduce;
+package sequential;
 
 import java.io.File;
 import java.io.FileNotFoundException;

@@ -1,4 +1,4 @@
-package map_reduce;
+package sequential;
 
 import java.util.ArrayList;
 
