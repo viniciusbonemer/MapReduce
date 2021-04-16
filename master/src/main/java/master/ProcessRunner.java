@@ -21,12 +21,21 @@ public class ProcessRunner implements Runnable {
 
     private boolean didStartRunning = false;
 
+    // <DEBUG>
+    private static int nextId = 0;
+    private static synchronized int createNextId() {
+        return nextId++;
+    }
+
+    public final int id;
+    // </DEBUG>
+
     private ArrayList<ProcessBuilder> processBuilders = new ArrayList<>();
     private ArrayList<Long> timeouts = new ArrayList<>();
 
     public ProcessCompletion onComplete = null;
 
-    public ProcessRunner() {}
+    public ProcessRunner() {this.id = ProcessRunner.createNextId();} // DEBUG
 
     public void addProcess(ProcessBuilder pb, long timeout) throws AlreadyRunningException {
         if (didStartRunning) {
@@ -38,15 +47,20 @@ public class ProcessRunner implements Runnable {
     
     @Override
     public void run() {
+        synchronized (System.out) {
+            System.out.println("[ProcessRunner" + id + "] Start"); // DEBUG
+        }
         didStartRunning = true;
         if (processBuilders.size() == 0) { return; }
         IntStream.range(0, processBuilders.size())
-            .forEach(i -> runFromProcessBuilder(processBuilders.get(i), timeouts.get(i)));
+            .forEach(i -> {
+                runFromProcessBuilder(processBuilders.get(i), timeouts.get(i));
+                System.out.println("[ProcessRunner" + id + "] Done " + ConnectionTester.getIdForProcessBuilder(processBuilders.get(i))); // DEBUG
+            });
     }
 
     private void runFromProcessBuilder(ProcessBuilder pb, long timeout) {
         pb.redirectErrorStream(true);
-        pb.inheritIO();
         
         Process p = null;
         try {
@@ -60,17 +74,17 @@ public class ProcessRunner implements Runnable {
         try {
             b = p.waitFor(timeout, TimeUnit.MILLISECONDS);
             if (!b) {
-                System.out.println("Timeout!");
+                System.out.println("[ProcessRunner" + id + "] Timeout " + ConnectionTester.getIdForProcessBuilder(pb)); // DEBUG
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
-        } finally {
-            p.destroy();
         }
 
         if (onComplete == null) { return; }
 
         onComplete.onComplete(p);
+
+        p.destroy();
     }
 
 }

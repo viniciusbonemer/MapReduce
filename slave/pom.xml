@@ -1,71 +1,115 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
+xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<modelVersion>4.0.0</modelVersion>
 
-  <groupId>com.viniciusbonemer</groupId>
-  <artifactId>slave</artifactId>
-  <version>0.1</version>
+<groupId>com.viniciusbonemer</groupId>
+<artifactId>slave</artifactId>
+<version>0.1</version>
+<packaging>pom</packaging>
 
-  <name>Slave</name>
+<name>Slave</name>
 
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.compiler.source>1.8</maven.compiler.source>
-    <maven.compiler.target>1.8</maven.compiler.target>
-  </properties>
+<properties>
+  <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  <maven.compiler.source>1.8</maven.compiler.source>
+  <maven.compiler.target>1.8</maven.compiler.target>
+</properties>
 
-  <dependencies>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.11</version>
-      <scope>test</scope>
-    </dependency>
-  </dependencies>
+<dependencies>
+  <dependency>
+    <groupId>junit</groupId>
+    <artifactId>junit</artifactId>
+    <version>4.11</version>
+    <scope>test</scope>
+  </dependency>
+</dependencies>
 
-  <build>
-    <pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
-      <plugins>
-        <!-- clean lifecycle, see https://maven.apache.org/ref/current/maven-core/lifecycles.html#clean_Lifecycle -->
-        <plugin>
-          <artifactId>maven-clean-plugin</artifactId>
-          <version>3.1.0</version>
-        </plugin>
-        <plugin>
-          <artifactId>maven-compiler-plugin</artifactId>
-          <version>3.8.0</version>
-        </plugin>
-        <plugin>
-          <artifactId>maven-jar-plugin</artifactId>
-          <version>3.0.2</version>
-          <configuration>
-            <archive>
-              <manifest>
-                <addClasspath>true</addClasspath>
-                <classpathPrefix>lib/</classpathPrefix>
-                <mainClass>slave.App</mainClass>
-              </manifest>
-            </archive>
-          </configuration>
-        </plugin>
-        <plugin>
-          <groupId>org.codehaus.mojo</groupId>
-          <artifactId>exec-maven-plugin</artifactId>
-          <version>1.6.0</version>
-          <configuration>
-              <executable>java</executable>
-              <arguments>
-                  <argument>-classpath</argument>
-                  <classpath />
-                  <argument>slave.App</argument>
-                  <argument>1</argument>
-                  <argument>/tmp/vbonemer/maps/UM0.txt</argument>
-              </arguments>
-          </configuration>
-      </plugin>
-      </plugins>
-    </pluginManagement>
-  </build>
+<build>
+  <plugins>
+      <!-- clean -->
+    <plugin>
+      <artifactId>maven-clean-plugin</artifactId>
+      <version>3.1.0</version>
+      <executions>
+        <execution>
+          <phase>clean</phase>
+          <goals>
+            <goal>clean</goal>
+          </goals>
+        </execution>
+      </executions>
+    </plugin>
+      <!-- compiler -->
+    <plugin>
+      <artifactId>maven-compiler-plugin</artifactId>
+      <version>3.8.0</version>
+      <executions>
+        <execution>
+          <phase>compile</phase>
+          <goals>
+            <goal>compile</goal>
+          </goals>
+        </execution>
+      </executions>
+    </plugin>
+      <!-- jar -->
+    <plugin>
+      <artifactId>maven-jar-plugin</artifactId>
+      <version>3.0.2</version>
+      <executions>
+        <execution>
+          <phase>package</phase>
+          <goals>
+            <goal>jar</goal>
+          </goals>
+        </execution>
+      </executions>
+      <configuration>
+        <archive>
+          <manifest>
+            <addClasspath>true</addClasspath>
+            <classpathPrefix>lib/</classpathPrefix>
+            <mainClass>slave.App</mainClass>
+          </manifest>
+        </archive>
+      </configuration>
+    </plugin>
+      <!-- install -->
+    <plugin>
+      <groupId>org.apache.maven.plugins</groupId>
+      <artifactId>maven-install-plugin</artifactId>
+      <version>2.4</version>
+      <configuration>
+          <skip>true</skip>
+      </configuration>
+    </plugin>
+      <!-- deploy -->
+    <plugin>
+      <groupId>org.apache.maven.plugins</groupId>
+      <artifactId>maven-deploy-plugin</artifactId>
+      <version>3.0.0-M1</version>
+      <configuration>
+          <skip>true</skip>
+      </configuration>
+    </plugin>
+    <!-- exec -->
+    <!-- <plugin>
+      <groupId>org.codehaus.mojo</groupId>
+      <artifactId>exec-maven-plugin</artifactId>
+      <version>1.6.0</version>
+      <configuration>
+        <executable>java</executable>
+        <arguments>
+          <argument>-classpath</argument>
+          <classpath />
+          <argument>slave.App</argument>
+          <argument>1</argument>
+          <argument>/tmp/vbonemer/maps/UM0.txt</argument>
+        </arguments>
+      </configuration>
+    </plugin> -->
+  </plugins>
+</build>
 </project>

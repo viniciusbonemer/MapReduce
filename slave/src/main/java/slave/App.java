@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -90,7 +91,7 @@ public class App {
             System.exit(1);
         }
         int hash = key.hashCode();
-        return Constants.shufflesDir + hash + "-" + machineName + ".txt";
+        return Constants.shufflesDir + Integer.toUnsignedString(hash) + "-" + machineName + ".txt";
     }
 
     private static String getFileForHash(String hash) {
@@ -155,8 +156,8 @@ public class App {
 
         Scanner input = null;
         try {
-            input = new Scanner(splitFile);
-        } catch (FileNotFoundException e) {
+            input = new Scanner(new BufferedReader(new FileReader(splitFile)));
+        } catch (Exception e) {
             e.printStackTrace();
             System.exit(-1);
         } 
@@ -337,8 +338,12 @@ public class App {
                     // escape / because of regex
                     String[] components = filePath.split("\\/");
                     String fileName = components[components.length - 1];
-                    int hash = Integer.parseInt(fileName.split("-")[0]);
-                    return hash % machines.size() == index;
+                    try {
+                        int hash = Integer.parseInt(fileName.split("-")[0]);
+                        return hash % machines.size() == index;
+                    } catch (Exception e) {
+                        return false;
+                    }
                 })
                 .collect(Collectors.toSet());
             

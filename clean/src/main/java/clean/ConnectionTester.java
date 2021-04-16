@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.io.IOException;
@@ -53,10 +54,15 @@ public class ConnectionTester {
         ExecutorService executor = Executors.newFixedThreadPool(10);
 
         this.testedMachines = readFile();
+        if (testedMachines.isEmpty()) { return; }
+        
         // Map each machine to a boolean indicating whether it's available
-        List<Boolean> results = this.testedMachines.stream()
+        List<Future<Boolean>> runners = this.testedMachines.stream()
             .map(machine -> createProcessRunner(machine, ConnectionTester.timeout))
             .map(runner -> executor.submit(runner))
+            .collect(Collectors.toList());
+
+        List<Boolean> results = runners.stream()
             .map(future -> {
                 try {
                     return future.get();

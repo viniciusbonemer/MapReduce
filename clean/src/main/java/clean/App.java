@@ -16,6 +16,7 @@ public class App {
 
         ConnectionTester connectionTester = new ConnectionTester(fileName);
         connectionTester.runTests(false);
+        System.out.println("Done testing");
 
         App app = new App(connectionTester.getAvailableMachines());
         app.cleanAllMachines();

@@ -37,7 +37,8 @@
             "name": "Launch Master App",
             "request": "launch",
             "mainClass": "master.App",
-            "projectName": "master"
+            "projectName": "master",
+            "args": "${workspaceFolder}/master/src/main/resources/Machines.txt ${workspaceFolder}/../input-files/input.txt"
         },
         {
             "type": "java",

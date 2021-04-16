@@ -9,6 +9,9 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.lang.Math;
@@ -65,6 +68,9 @@ public class App {
         String machinesFileName = args[0];
         String inputFile = args[1];
 
+        System.out.println("[Starting] Machines File: " + machinesFileName);
+        System.out.println("[Starting] Input File: " + inputFile);
+
         ConnectionTester connectionTester = new ConnectionTester(machinesFileName);
         connectionTester.runTests();
         
@@ -77,6 +83,8 @@ public class App {
 
         // MAP
 
+        System.out.println("[App] <Starting> MAP");
+        System.out.println("[App] <Creating Threads> MAP");
         List<ProcessRunner> runners = app.createMapRunners();
 
         List<Thread> threads = runners.stream()
@@ -85,7 +93,9 @@ public class App {
         
         long startTime = System.nanoTime();
 
+        System.out.println("[App] <Starting Threads> MAP");
         threads.forEach(thread -> thread.start());
+        System.out.println("[App] <Joining Threads> MAP");
         threads.forEach(thread -> {
             try {
                 thread.join();
@@ -99,8 +109,12 @@ public class App {
         MeasuredTime mt = new MeasuredTime(duration);
         
         App.log("MAP FINISHED", mt);
+        System.out.println("[App] <Done> MAP");
 
         // SHUFFLE
+
+        System.out.println("[App] <Starting> SHUFFLE");
+        System.out.println("[App] <Creating Threads> SHUFFLE");
 
         runners = app.createShuffleRunners();
 
@@ -110,7 +124,9 @@ public class App {
         
         startTime = System.nanoTime();
 
+        System.out.println("[App] <Starting Threads> SHUFFLE");
         threads.forEach(thread -> thread.start());
+        System.out.println("[App] <Joining Threads> SHUFFLE");
         threads.forEach(thread -> {
             try {
                 thread.join();
@@ -118,15 +134,19 @@ public class App {
                 e.printStackTrace();
             }
         });
+        
 
         endTime = System.nanoTime();
         duration = (endTime - startTime);
         mt = new MeasuredTime(duration);
         
         App.log("SHUFFLE FINISHED", mt);
+        System.out.println("[App] <Done> SHUFFLE");
 
         // REDUCE
 
+        System.out.println("[App] <Starting> REDUCE");
+        System.out.println("[App] <Creating Threads> REDUCE");
         runners = app.createReduceRunners();
 
         threads = runners.stream()
@@ -135,7 +155,9 @@ public class App {
         
         startTime = System.nanoTime();
 
+        System.out.println("[App] <Starting Threads> REDUCE");
         threads.forEach(thread -> thread.start());
+        System.out.println("[App] <Joining Threads> REDUCE");
         threads.forEach(thread -> {
             try {
                 thread.join();
@@ -149,9 +171,12 @@ public class App {
         mt = new MeasuredTime(duration);
         
         App.log("REDUCE FINISHED", mt);
+        System.out.println("[App] <Done> REDUCE");
 
         // RETRIEVE
 
+        System.out.println("[App] <Starting> RETRIEVE");
+        System.out.println("[App] <Creating Threads> RETRIEVE");
         runners = app.createRetrieveResultsRunners();
 
         threads = runners.stream()
@@ -160,7 +185,9 @@ public class App {
         
         startTime = System.nanoTime();
 
+        System.out.println("[App] <Starting Threads> RETRIEVE");
         threads.forEach(thread -> thread.start());
+        System.out.println("[App] <Joining Threads> RETRIEVE");
         threads.forEach(thread -> {
             try {
                 thread.join();
@@ -169,6 +196,7 @@ public class App {
             }
         });
 
+        System.out.println("[App] <Merging files> RETRIEVE");
         app.createResultsFile();
 
         endTime = System.nanoTime();
@@ -176,8 +204,10 @@ public class App {
         mt = new MeasuredTime(duration);
         
         App.log("RETRIEVE FINISHED", mt);
+        System.out.println("[App] <Done> RETRIEVE");
 
         // app.printResults();
+        System.out.println("[Stopping]");
     }
 
     private List<String> machines;
@@ -247,12 +277,20 @@ public class App {
             final String command = cmd1 + "; " + cmd2;
             ProcessBuilder execBuilder = new ProcessBuilder(Constants.ssh, login, command);
             
+            // DEBUG
+            String id = "MAP"+ConnectionTester.createNextId();
+            mkdirBuilder.environment().put(ConnectionTester.IDKEY, id + " - mkdir");
+            scpSplitBuilder.environment().put(ConnectionTester.IDKEY, id + " - scp splits");
+            scpMachinesBuilder.environment().put(ConnectionTester.IDKEY, id + " - scp machines");
+            execBuilder.environment().put(ConnectionTester.IDKEY, id + " - exec");
+            //
+
             ProcessRunner runner = new ProcessRunner();
-            try { 
-                runner.addProcess(mkdirBuilder, 4000);
-                runner.addProcess(scpSplitBuilder, 4000);
-                runner.addProcess(scpMachinesBuilder, 4000);
-                runner.addProcess(execBuilder, 4000);
+            try {
+                runner.addProcess(mkdirBuilder, Integer.MAX_VALUE);
+                runner.addProcess(scpSplitBuilder, Integer.MAX_VALUE);
+                runner.addProcess(scpMachinesBuilder, Integer.MAX_VALUE);
+                runner.addProcess(execBuilder, Integer.MAX_VALUE);
             } catch (AlreadyRunningException e) {
                 System.err.println("This should never happen");
                 System.exit(1);
@@ -284,9 +322,12 @@ public class App {
             final String command = cmd1 + "; " + cmd2;
             ProcessBuilder execBuilder = new ProcessBuilder(Constants.ssh, login, command);
             
+            String id = "SHUFFLE"+ConnectionTester.createNextId();
+            execBuilder.environment().put(ConnectionTester.IDKEY, id + " - exec");
+
             ProcessRunner runner = new ProcessRunner();
             try {
-                runner.addProcess(execBuilder, 4000);
+                runner.addProcess(execBuilder, Integer.MAX_VALUE);
             } catch (AlreadyRunningException e) {
                 System.err.println("This should never happen");
                 System.exit(1);
@@ -312,9 +353,12 @@ public class App {
             final String command = cmd1 + "; " + cmd2;
             ProcessBuilder execBuilder = new ProcessBuilder(Constants.ssh, login, command);
             
+            String id = "REDUCE"+ConnectionTester.createNextId();
+            execBuilder.environment().put(ConnectionTester.IDKEY, id + " - exec");
+            
             ProcessRunner runner = new ProcessRunner();
             try {
-                runner.addProcess(execBuilder, 4000);
+                runner.addProcess(execBuilder, Integer.MAX_VALUE);
             } catch (AlreadyRunningException e) {
                 System.err.println("This should never happen");
                 System.exit(1);
@@ -339,11 +383,15 @@ public class App {
             final String origin = login + ":" + Constants.reducesDir;
             final String dest = machineResultDir;
             ProcessBuilder scpBuilder = new ProcessBuilder(Constants.scp, "-r", origin, dest);
+
+            String id = "RETIEVE"+ConnectionTester.createNextId();
+            mkdirResultsBuilder.environment().put(ConnectionTester.IDKEY, id + " - mkdir");
+            scpBuilder.environment().put(ConnectionTester.IDKEY, id + " - scp");
             
             ProcessRunner runner = new ProcessRunner();
             try {
-                runner.addProcess(mkdirResultsBuilder, 4000);
-                runner.addProcess(scpBuilder, 4000);
+                runner.addProcess(mkdirResultsBuilder, Integer.MAX_VALUE);
+                runner.addProcess(scpBuilder, Integer.MAX_VALUE);
             } catch (AlreadyRunningException e) {
                 System.err.println("This should never happen");
                 System.exit(1);

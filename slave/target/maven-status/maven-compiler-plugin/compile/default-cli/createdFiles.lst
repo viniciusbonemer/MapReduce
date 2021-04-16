@@ -1,5 +1,0 @@
-slave/ProcessRunner.class
-slave/App.class
-slave/ProcessRunner$AlreadyRunningException.class
-slave/ProcessRunner$ProcessCompletion.class
-slave/Constants.class
