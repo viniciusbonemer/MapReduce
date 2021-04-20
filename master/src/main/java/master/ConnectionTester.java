@@ -47,16 +47,16 @@ public class ConnectionTester {
     }
 
     public void runTests(boolean verbose) {
-        System.out.println("[ConnectionTester] <Start> Reading machines files");
+        // System.out.println("[ConnectionTester] <Start> Reading machines files");
         this.testedMachines = readFile();
-        System.out.println("[ConnectionTester] <Done> Reading machines files");
+        // System.out.println("[ConnectionTester] <Done> Reading machines files");
 
         Map<String, Boolean> results = IntStream.range(0, testedMachines.size()).boxed()
             .collect(Collectors.toMap(
                 i -> testedMachines.get(i),
                 i -> false
             ));
-        System.out.println("[ConnectionTester] <Creating Threads> Testing Machines");
+        // System.out.println("[ConnectionTester] <Creating Threads> Testing Machines");
         List<Thread> threads = results.entrySet().stream()
             .map(entry -> new AbstractMap.SimpleEntry<>(entry.getKey(), createTestMachine(entry.getKey(), 4000)))
             .map(entry -> {
@@ -76,9 +76,9 @@ public class ConnectionTester {
             .map(runner -> new Thread(runner))
             .collect(Collectors.toList());
         // DEBUG
-        System.out.println("[ConnectionTester] <Starting Threads> Testing Machines");
+        // System.out.println("[ConnectionTester] <Starting Threads> Testing Machines");
         threads.forEach(t -> t.start());
-        System.out.println("[ConnectionTester] <Waiting on threads Threads> Testing Machines");
+        // System.out.println("[ConnectionTester] <Waiting on threads Threads> Testing Machines");
         threads.forEach(t -> {
             try {
                 t.join();
@@ -87,7 +87,7 @@ public class ConnectionTester {
                 System.exit(1);
             }
         });
-        System.out.println("[ConnectionTester] <Reading Results> Testing Machines");
+        // System.out.println("[ConnectionTester] <Reading Results> Testing Machines");
 
         if (verbose) {
             // Print each machine's status
@@ -101,7 +101,7 @@ public class ConnectionTester {
             .filter(entry -> entry.getValue())
             .map(entry -> entry.getKey())
             .collect(Collectors.toList());
-        System.out.println("[ConnectionTester] <Done> Testing Machines");
+        // System.out.println("[ConnectionTester] <Done> Testing Machines");
     }
 
     private boolean verifyProcessOutput(Process p, String machineName) {

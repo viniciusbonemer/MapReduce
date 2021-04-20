@@ -47,15 +47,15 @@ public class ProcessRunner implements Runnable {
     
     @Override
     public void run() {
-        synchronized (System.out) {
-            System.out.println("[ProcessRunner" + id + "] Start"); // DEBUG
-        }
+        // synchronized (System.out) {
+        //     System.out.println("[ProcessRunner" + id + "] Start"); // DEBUG
+        // }
         didStartRunning = true;
         if (processBuilders.size() == 0) { return; }
         IntStream.range(0, processBuilders.size())
             .forEach(i -> {
                 runFromProcessBuilder(processBuilders.get(i), timeouts.get(i));
-                System.out.println("[ProcessRunner" + id + "] Done " + ConnectionTester.getIdForProcessBuilder(processBuilders.get(i))); // DEBUG
+                // System.out.println("[ProcessRunner" + id + "] Done " + ConnectionTester.getIdForProcessBuilder(processBuilders.get(i))); // DEBUG
             });
     }
 

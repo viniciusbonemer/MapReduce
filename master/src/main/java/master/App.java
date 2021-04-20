@@ -9,9 +9,6 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.lang.Math;
@@ -84,7 +81,7 @@ public class App {
         // MAP
 
         System.out.println("[App] <Starting> MAP");
-        System.out.println("[App] <Creating Threads> MAP");
+        // System.out.println("[App] <Creating Threads> MAP");
         List<ProcessRunner> runners = app.createMapRunners();
 
         List<Thread> threads = runners.stream()
@@ -93,9 +90,9 @@ public class App {
         
         long startTime = System.nanoTime();
 
-        System.out.println("[App] <Starting Threads> MAP");
+        // System.out.println("[App] <Starting Threads> MAP");
         threads.forEach(thread -> thread.start());
-        System.out.println("[App] <Joining Threads> MAP");
+        // System.out.println("[App] <Joining Threads> MAP");
         threads.forEach(thread -> {
             try {
                 thread.join();
@@ -109,12 +106,12 @@ public class App {
         MeasuredTime mt = new MeasuredTime(duration);
         
         App.log("MAP FINISHED", mt);
-        System.out.println("[App] <Done> MAP");
+        // System.out.println("[App] <Done> MAP");
 
         // SHUFFLE
 
         System.out.println("[App] <Starting> SHUFFLE");
-        System.out.println("[App] <Creating Threads> SHUFFLE");
+        // System.out.println("[App] <Creating Threads> SHUFFLE");
 
         runners = app.createShuffleRunners();
 
@@ -124,9 +121,9 @@ public class App {
         
         startTime = System.nanoTime();
 
-        System.out.println("[App] <Starting Threads> SHUFFLE");
+        // System.out.println("[App] <Starting Threads> SHUFFLE");
         threads.forEach(thread -> thread.start());
-        System.out.println("[App] <Joining Threads> SHUFFLE");
+        // System.out.println("[App] <Joining Threads> SHUFFLE");
         threads.forEach(thread -> {
             try {
                 thread.join();
@@ -141,12 +138,12 @@ public class App {
         mt = new MeasuredTime(duration);
         
         App.log("SHUFFLE FINISHED", mt);
-        System.out.println("[App] <Done> SHUFFLE");
+        // System.out.println("[App] <Done> SHUFFLE");
 
         // REDUCE
 
         System.out.println("[App] <Starting> REDUCE");
-        System.out.println("[App] <Creating Threads> REDUCE");
+        // System.out.println("[App] <Creating Threads> REDUCE");
         runners = app.createReduceRunners();
 
         threads = runners.stream()
@@ -155,9 +152,9 @@ public class App {
         
         startTime = System.nanoTime();
 
-        System.out.println("[App] <Starting Threads> REDUCE");
+        // System.out.println("[App] <Starting Threads> REDUCE");
         threads.forEach(thread -> thread.start());
-        System.out.println("[App] <Joining Threads> REDUCE");
+        // System.out.println("[App] <Joining Threads> REDUCE");
         threads.forEach(thread -> {
             try {
                 thread.join();
@@ -171,12 +168,12 @@ public class App {
         mt = new MeasuredTime(duration);
         
         App.log("REDUCE FINISHED", mt);
-        System.out.println("[App] <Done> REDUCE");
+        // System.out.println("[App] <Done> REDUCE");
 
         // RETRIEVE
 
         System.out.println("[App] <Starting> RETRIEVE");
-        System.out.println("[App] <Creating Threads> RETRIEVE");
+        // System.out.println("[App] <Creating Threads> RETRIEVE");
         runners = app.createRetrieveResultsRunners();
 
         threads = runners.stream()
@@ -185,9 +182,9 @@ public class App {
         
         startTime = System.nanoTime();
 
-        System.out.println("[App] <Starting Threads> RETRIEVE");
+        // System.out.println("[App] <Starting Threads> RETRIEVE");
         threads.forEach(thread -> thread.start());
-        System.out.println("[App] <Joining Threads> RETRIEVE");
+        // System.out.println("[App] <Joining Threads> RETRIEVE");
         threads.forEach(thread -> {
             try {
                 thread.join();
@@ -204,7 +201,7 @@ public class App {
         mt = new MeasuredTime(duration);
         
         App.log("RETRIEVE FINISHED", mt);
-        System.out.println("[App] <Done> RETRIEVE");
+        // System.out.println("[App] <Done> RETRIEVE");
 
         // app.printResults();
         System.out.println("[Stopping]");
